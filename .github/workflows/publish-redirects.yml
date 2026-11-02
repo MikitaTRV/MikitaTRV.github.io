@@ -1,0 +1,45 @@
+name: Publish legacy GO’EL redirects
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "index.html"
+      - "goel/**"
+      - ".github/workflows/publish-redirects.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+      - name: Prepare redirects
+        run: |
+          mkdir -p _site/goel
+          cp index.html _site/index.html
+          cp goel/index.html _site/goel/index.html
+          cp goel/tracking.html _site/goel/tracking.html
+          cp goel/privacy.html _site/goel/privacy.html
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+      - name: Upload site artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - name: Deploy site
+        id: deployment
+        uses: actions/deploy-pages@v4
